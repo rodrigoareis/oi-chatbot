@@ -1,6 +1,6 @@
 {
-  "name": "conversation-simple",
-  "description": "A simple Node.js based web app which shows how to use the Conversation API to recognize user intents.",
+  "name": "oi-chatbot",
+  "description": "This Node.js app demonstrates the Conversation service in a simple mobile carrier chatbot.",
   "version": "0.1.1",
   "main": "server.js",
   "scripts": {

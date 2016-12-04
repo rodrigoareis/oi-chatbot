@@ -12,9 +12,9 @@ deploy:
   api: https://api.ng.bluemix.net
   username: $CF_USERNAME
   password: $CF_PASSWORD
-  name: conversation-simple
+  name: oi-chatbot
   organization: WatsonPlatformServices
   space: demos
   on:
-    repo: watson-developer-cloud/conversation-simple
+    repo: watson-developer-cloud/oi-chatbot
     branch: release

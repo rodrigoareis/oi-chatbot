@@ -4,10 +4,12 @@ var Api = (function() {
   var requestPayload;
   var responsePayload;
   var messageEndpoint = '/api/message';
+  var apiEndpoint = '/api/';
 
   // Publicly accessible methods defined
   return {
     sendRequest: sendRequest,
+    sendDatabaseRequest: sendDatabaseRequest,
 
     // The request/response getters/setters are defined here to prevent internal methods
     // from calling the methods without any of the callbacks that are added elsewhere.
@@ -58,4 +60,25 @@ var Api = (function() {
     // Send request
     http.send(params);
   }
+
+  function sendDatabaseRequest(target, key, result) {
+
+    var url = apiEndpoint + target;
+    if(key)
+      url = url + '?key=' + key;
+
+    // Built http request
+    var http = new XMLHttpRequest();
+    http.open('POST', url, true);
+    http.setRequestHeader('Content-type', 'application/json');
+    http.onreadystatechange = function() {
+      if (http.readyState === 4 && http.status === 200 && http.responseText) {
+        result(http.responseText);
+      }
+    };
+
+    // Send request
+    http.send(null);
+  }
+
 }());

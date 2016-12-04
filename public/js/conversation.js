@@ -1,7 +1,7 @@
 // The ConversationPanel module is designed to handle
 // all display and behaviors of the conversation column of the app.
 /* eslint no-unused-vars: "off" */
-/* global Api: true, Common: true*/
+/* global Api: true, Common: true */
 
 var ConversationPanel = (function() {
   var settings = {
@@ -117,28 +117,41 @@ var ConversationPanel = (function() {
     var isUser = isUserMessage(typeValue);
     var textExists = (newPayload.input && newPayload.input.text)
       || (newPayload.output && newPayload.output.text);
-    if (isUser !== null && textExists) {
-      // Create new message DOM element
-      var messageDivs = buildMessageDomElements(newPayload, isUser);
-      var chatBoxElement = document.querySelector(settings.selectors.chatBox);
-      var previousLatest = chatBoxElement.querySelectorAll((isUser
-              ? settings.selectors.fromUser : settings.selectors.fromWatson)
-              + settings.selectors.latest);
-      // Previous "latest" message is no longer the most recent
-      if (previousLatest) {
-        Common.listForEach(previousLatest, function(element) {
-          element.classList.remove('latest');
-        });
+
+    // check context for any database lookup needed then build message
+    checkContext(newPayload, function(result){
+      if(result) {
+        result.forEach(function(text) {
+          if (text) {
+            newPayload.output.text.push(text);
+          }
+        }); 
+        textExists = true;
       }
 
-      messageDivs.forEach(function(currentDiv) {
-        chatBoxElement.appendChild(currentDiv);
-        // Class to start fade in animation
-        currentDiv.classList.add('load');
-      });
-      // Move chat to the most recent messages when new messages are added
-      scrollToChatBottom();
-    }
+      if (isUser !== null && textExists) {
+        // Create new message DOM element
+        var messageDivs = buildMessageDomElements(newPayload, isUser);
+        var chatBoxElement = document.querySelector(settings.selectors.chatBox);
+        var previousLatest = chatBoxElement.querySelectorAll((isUser
+                ? settings.selectors.fromUser : settings.selectors.fromWatson)
+                + settings.selectors.latest);
+        // Previous "latest" message is no longer the most recent
+        if (previousLatest) {
+          Common.listForEach(previousLatest, function(element) {
+            element.classList.remove('latest');
+          });
+        }
+
+        messageDivs.forEach(function(currentDiv) {
+          chatBoxElement.appendChild(currentDiv);
+          // Class to start fade in animation
+          currentDiv.classList.add('load');
+        });
+        // Move chat to the most recent messages when new messages are added
+        scrollToChatBottom();
+      }   
+    });
   }
 
   // Checks if the given typeValue matches with the user "name", the Watson "name", or neither
@@ -159,6 +172,7 @@ var ConversationPanel = (function() {
     if (Object.prototype.toString.call( textArray ) !== '[object Array]') {
       textArray = [textArray];
     }
+
     var messageArray = [];
 
     textArray.forEach(function(currentText) {
@@ -188,6 +202,30 @@ var ConversationPanel = (function() {
     });
 
     return messageArray;
+  }
+
+  function checkContext(newPayload, result) {
+    var resultArray = null;
+
+    // check if there is a plan selected
+    if(newPayload.context.selected_plan) {
+      var selected_plan = newPayload.context.selected_plan;
+      
+      // send Database request to retrieve plan options for selected plan type
+      Api.sendDatabaseRequest('planoptions', selected_plan, function(jsonStr) {
+        if(jsonStr) {
+          var jsonArray = JSON.parse(jsonStr);
+          resultArray = ['Temos as seguintes opções para este tipo de plano: '];
+          jsonArray.forEach(function(plan) {
+            if (plan) {
+              resultArray.push(plan.title + ' - ' + plan.internet + ' de Internet, ' + plan.minutes + ' minutos, Valor: ' + plan.price);
+            }
+          });  
+          result(resultArray);
+        }
+      });      
+    } 
+    result(resultArray); 
   }
 
   // Scroll to the bottom of the chat window (to the most recent messages)
